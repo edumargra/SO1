@@ -1,0 +1,9 @@
+practica1.sh nomDeCarpeta
+
+intercanviem els continguts del fitxer més gran i més petit de text(.txt)
+
+fes el mateox pèr tots els subdirectoris de la carpeta.
+
+és a dir
+
+per cada subdirectori de la carpeta tornar a runejar el script
