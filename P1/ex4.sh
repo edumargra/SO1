@@ -1,27 +1,24 @@
-directory=$1
-numero=$2
-cd $1
-if [ ! -f petits ] 
+if [ $# == 2 ]
 then
-	mkdir petits
-fi
-if [ ! -f grans ] 
-then
-	mkdir grans
-fi	
-ls -l > info.txt
-mida=($(awk '{print $5}' info.txt))
-nom=($(awk '{print $9}' info.txt))
-for (( i = 0; i <= ${#nom[@]}; i++ ))
-do
-	if [ ! -d ${nom[i]} ] 
-	then
-		echo $(( ${mida[i]} )) 
-		if [ $(( ${mida[i]} - numero )) -gt 0 ]
+	directory=$1
+	numero=$2
+	mkdir -p petits
+	mkdir -p grans	
+	ls -l $1 > info.txt
+	mida=($(awk '{print $5}' info.txt))
+	nom=($(awk '{print $9}' info.txt))
+	for (( i = 0; i < ${#nom[*]}; i++ ))
+	do
+		if [ ! -d $1/${nom[$i]} ] 
 		then
-			mv ${nom[i]} grans
-		else
-			mv ${nom[i]} petits
+			if [  ${mida[$i]} -gt $numero ]
+			then
+				cp $1/${nom[$i]} grans
+			else
+				cp $1/${nom[$i]} petits
+			fi
 		fi
-	fi
-done									 
+	done
+else
+	"ERROR: Introdueix dos paràmetres, un directori i una cadena"
+fi									 

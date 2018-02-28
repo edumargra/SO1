@@ -2,13 +2,10 @@ if [ $# == 1 ]
 then
 	result=""
 	string=$1
-	len=${#string}
-	i=0
-	while [ $i -lt $len ]
+	len=$((${#string} - 1))
+	for (( i=$len; i>=0 ; i-- ))
 	do
-		index=$(expr $len - $i - 1)
-		result=$result${string:$index:1}
-		(( i++ ))
+		result=$result${string:$i:1}
 	done
 	echo $result
 else

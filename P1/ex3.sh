@@ -1,17 +1,19 @@
 if [ $# == 2 ]
 then
-	cd $1
 	pattern=$2
 	len=${#pattern}
-	for f in $(ls *.txt)
-	do
-		for word in $(cat $f)
-		do
-			if [ $pattern == "${word:0:len}" ]
-			then
-				echo "$f: $word"
-			fi
-		done
+	for f in $(ls $1)
+	do	
+		if [ ! -d $f ]
+		then
+			for word in $(cat $f)
+			do
+				if [ $pattern == "${word:0:len}" ]
+				then
+					echo "$f: $word"
+				fi
+			done
+		fi
 	done
 	exit 0
 else

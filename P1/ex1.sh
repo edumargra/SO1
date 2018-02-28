@@ -1,11 +1,16 @@
 if [ $# == 1 ]
 then
-	cd $1
 	suma=0
-	ls -l *.txt > info.txt
-	for i in $(awk '{print $5}' info.txt)
+	ls -l $1 > info.txt
+	nom=($(awk '{print $9}' info.txt))
+	mida=($(awk '{print $5}' info.txt))
+	rm info.txt
+	for (( i = 0; i < ${#nom[*]} ; i++ ))
 	do
-		suma=$(expr $suma + $i)
+		if [ ! -d "${nom[$i]}" ]
+		then
+			suma=$(expr $suma + ${mida[$i]})
+		fi
 	done
 	echo $suma
 	exit 0
