@@ -7,6 +7,7 @@ then
 	ls -l $1 > info.txt
 	mida=($(awk '{print $5}' info.txt))
 	nom=($(awk '{print $9}' info.txt))
+	rm info.txt
 	for (( i = 0; i < ${#nom[*]}; i++ ))
 	do
 		if [ ! -d $1/${nom[$i]} ] 

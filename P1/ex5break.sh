@@ -5,18 +5,13 @@ then
         extensio=${f##*.}
         if [ $extensio == $2 ]
         then
-            text=($(cat $1/$f))
-            len=${#text[*]}
-            i=0
-            trobat=false
-            while [ $trobat == false ] && [ $i -lt $len ]
+            for word in $(cat $1/$f)
             do
-                if [ $3 == ${text[$i]} ]
+                if [ $3 == $word ]
                 then
                     echo $1/$f
-                    trobat=true
+                    break
                 fi
-                (( i++ ))
             done
         elif [ -d $1/$f ]
         then
