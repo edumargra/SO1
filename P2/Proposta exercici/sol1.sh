@@ -1,0 +1,1 @@
+ps aux | awk '{ if (NR!=1) sub($3,"0.0"); print}' > informe.txt
