@@ -1,6 +1,6 @@
 if [ $# == 2 ]
 then
-    find $1 -type f -exec ls {} \; > files1.txt
+    find $1 -type f -exec ls {} \; > files1.txt #exec
     find $2 -type f -exec ls {} \; | sed "s:$2:$1:g" > files2.txt
 	for file1 in $(cat files1.txt)
 	do

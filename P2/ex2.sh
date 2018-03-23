@@ -1,21 +1,9 @@
 if [ $# == 1 ]
 then
 	suma=0
-	mida=($(ls -f -l $1 | awk '{print $5}'))
-	for (( i = 0; i < ${#mida[*]} ; i++ ))
-	do
-        suma=$(expr $suma + ${mida[$i]})
-	done
+	suma=$(ls -l $1 | awk '{suma += $5} END {print suma}')
 	echo $suma $1
-	nom=($(ls $1))
-    for (( i = 0; i < ${#nom[*]} ; i++ ))
-	do
-        echo ${nom[$i]}
-        if [ -d ${nom[$i]} ]
-		then
-			echo ${nom[$i]}
-		fi
-	done
+	find . -type d -exec $1/ex2.sh {} \;
 	exit 0
 else
 	echo "ERROR: Introdueix un unic parametre, un directori."

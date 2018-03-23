@@ -1,6 +1,6 @@
 if [ $# == 3 ]
 then
-    find . -type f -name "*.$1" -exec ls {} \; | echo $(grep -c $2 {})
+	find . -type f -name "*.$1" -printf '%p ' -exec grep -oc $2 {} \; -exec sed -i "s:$2:$3:g" {} \; 
 	exit 0
 else
 	echo "ERROR: Introdueix tres parametres, una extensio de fitxer i dues cadenes"
