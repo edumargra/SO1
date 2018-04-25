@@ -7,8 +7,8 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-int finalizar = 0;
-int transferir = 0;
+int finalitzar = 0;
+int trans = 0;
 
 struct Data {
     int* passenger_count;
@@ -60,12 +60,12 @@ int main(int argc, char *argv[])
 
 void transferir(void){
     printf("He capturado la señal transferir.\n");
-    transferir = 1;
+    trans = 1;
 }
 
 void finalizar(void){
     printf("He capturado la señal finalizar.\n");
-    finalizar = 1;
+    finalitzar = 1;
 }
 
 void consumer()
@@ -78,8 +78,8 @@ void consumer()
     /*
      * TODO: preparar el codigo para recibir senyales del productor
      */
-    signal(SIGUSR1,transferir);
-    signal(SIGTERM, finalizar);
+    signal(SIGUSR1,trans);
+    signal(SIGTERM, finalitzar);
 			
 	// Abrimos un fichero con el nombre = pid para recibir los datos
 	sprintf(filename, "%d", getpid());
@@ -88,9 +88,20 @@ void consumer()
 	/*
 	 *  TODO: Bucle para leer y procesar los datos del fichero que envia el productor
 	 */
-    while(!finalizar){
-        while(transferir){
+    int* passenger_count, trip_time_in_secs;
+    int max;
+    float mean_passenger_count, mean_trip_time;
+    
+    while(!finalitzar){
+        if (trans){
+            trans = 0;
+            read(fd, &max, sizeof(int));
+            read(fd, passenger_count, sizeof(int) * max);
+            read(fd, trip_time_in_secs, sizeof(int) * max);
             
+            mean_passenger_count = (std::accumulate(passenger_count->begin(), passenger_count->end(), 0.0) / max + mean_passenger_count) / 2;
+            mean_trip_time = (std::accumulate(trip_time_in_secs->begin(), trip_time_in_secs->end(), 0.0) / max + mean_trip_time) / 2;
+        }
     }
 	
 	close(fd);
@@ -100,7 +111,9 @@ void consumer()
  	 * TODO: Codigo para entregar resultado parcial al productor a traves del mismo fichero
      *       que se ha utilizado para recibir datos.
  	 */	
-
+    write(fd, &mean_passenger_count, sizeof(float));
+    write(fd, &mean_trip_time, sizeof(float));
+    
 	exit(0);
 }
 
@@ -146,7 +159,12 @@ void producer(char* filedata, int* pids, int total_consumers, int lines)
      * TODO: Leer resultados parciales de los consumidores y calcular valores finales.
      * Borrar el fichero filename al finalizar.
      */
- 
+    fd = open(filename, O_CREAT | O_RDWR | O_SYNC | O_APPEND , S_IRUSR | S_IWUSR | S_IRGRP);
+    
+    read(fd, &media_pasajeros, sizeof(float));
+    read(fd, &media_tiempo_de_viaje, sizeof(float));
+    
+    close(fd);
     remove(filename);	
 
     printf("TOTAL de lineas leidas: %d\n", lineas);
@@ -166,13 +184,13 @@ void send_consumer(struct Data* d, int consumer)
      * Utilizar la variable 'data' para almacenar los datos en memoria antes de hacer
      * el write.
      */
-    uint16_t i = 0;
+    int i = 0;
     data[i] = d->total;
     for(i = 1; i < d->total; i++){
         data[i] = d->passenger_count[i];
-        data[i*2] = d->trip_time_in_secs[i];
+        data[d->total+i] = d->trip_time_in_secs[i];
     }
-    write(fd, data, sizeof(int)*2*data->total+1);
+    write(fd, data, sizeof(int)*2*(data->total)+1);
     close(fd);
 }
 
