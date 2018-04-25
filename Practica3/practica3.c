@@ -20,8 +20,8 @@ void consumer();
 void producer(char*,int*, int, int);
 struct Data* get_data(FILE*,int);
 void send_consumer(struct Data*, int);
-void finalizar(void);
-void transferir(void);
+void finalizar(int signo);
+void transferir(int signo);
 
 
 int main(int argc, char *argv[])
@@ -58,12 +58,12 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void transferir(void){
+void transferir(int signo){
     printf("He capturado la señal transferir.\n");
-    trans = 1;
+    trans++;
 }
 
-void finalizar(void){
+void finalizar(int signo){
     printf("He capturado la señal finalizar.\n");
     finalitzar = 1;
 }
@@ -78,8 +78,8 @@ void consumer()
     /*
      * TODO: preparar el codigo para recibir senyales del productor
      */
-    signal(SIGUSR1,trans);
-    signal(SIGTERM, finalitzar);
+    signal(SIGUSR1,transferir);
+    signal(SIGTERM, finalizar);
 			
 	// Abrimos un fichero con el nombre = pid para recibir los datos
 	sprintf(filename, "%d", getpid());
@@ -88,21 +88,42 @@ void consumer()
 	/*
 	 *  TODO: Bucle para leer y procesar los datos del fichero que envia el productor
 	 */
-    int* passenger_count, trip_time_in_secs;
-    int max;
-    float mean_passenger_count, mean_trip_time;
-    
-    while(!finalitzar){
+    int* passenger_count;
+    int* trip_time_in_secs;
+    int max, totalLinies = 0;
+    float mean_passenger_count = 0.0, mean_trip_time = 0.0, partial_passenger_count, partial_trip_time;
+    do {
         if (trans){
-            trans = 0;
+            trans--;
             read(fd, &max, sizeof(int));
+            printf("linies llegides consumidor: %d\n", max);
+            passenger_count = (int*)malloc(sizeof(int) * max);
+            trip_time_in_secs = (int*)malloc(sizeof(int) * max);
             read(fd, passenger_count, sizeof(int) * max);
             read(fd, trip_time_in_secs, sizeof(int) * max);
             
-            mean_passenger_count = (std::accumulate(passenger_count->begin(), passenger_count->end(), 0.0) / max + mean_passenger_count) / 2;
-            mean_trip_time = (std::accumulate(trip_time_in_secs->begin(), trip_time_in_secs->end(), 0.0) / max + mean_trip_time) / 2;
+            partial_passenger_count = 0.0;
+            partial_trip_time = 0.0;
+            
+            for(int i=0; i<max; i++) {
+                partial_passenger_count += (float) passenger_count[i];
+                partial_trip_time += (float) trip_time_in_secs[i];
+            }
+            partial_passenger_count /= max;
+            partial_trip_time /= max;
+            
+            mean_passenger_count = (mean_passenger_count + partial_passenger_count) / 2;
+            mean_trip_time = (mean_trip_time + partial_trip_time) / 2;
+            totalLinies += max;
+            
+            free(passenger_count);
+            free(trip_time_in_secs);
         }
-    }
+        if (trans == 0) {
+            printf("Soc al pause\n");
+            pause();
+        }
+    } while ((!finalitzar) && (trans != 0));
 	
 	close(fd);
 	remove(filename);
@@ -111,9 +132,15 @@ void consumer()
  	 * TODO: Codigo para entregar resultado parcial al productor a traves del mismo fichero
      *       que se ha utilizado para recibir datos.
  	 */	
+
+    printf("finalizar: %d trans: %d\n", finalitzar, trans);
+    
+    printf("lineas leidas: %d\n", totalLinies);
+    fd = open(filename, O_CREAT | O_RDWR | O_SYNC | O_APPEND , S_IRUSR | S_IWUSR | S_IRGRP);
     write(fd, &mean_passenger_count, sizeof(float));
     write(fd, &mean_trip_time, sizeof(float));
-    
+    write(fd, &totalLinies, sizeof(int));
+    close(fd);
 	exit(0);
 }
 
@@ -135,14 +162,21 @@ void producer(char* filedata, int* pids, int total_consumers, int lines)
         /*
          * TODO: Codigo para notificar que hay datos a los consumidores (SIGUSR1)
          */			
+        printf("He enviado señal transferir señal\n");
+
         kill(pids[0], SIGUSR1);
         
         d = get_data(file,lines);
     }
-
     /*
      * TODO: Codigo para notificar que finalicen los consumidores (SIGTERM)
      */
+    //Delay
+    /*int count = 0;
+    while(count < 50000) {
+        count++;
+    }*/
+    printf("He enviado señal signterm\n");
     kill(pids[0], SIGTERM);
     
 
@@ -163,6 +197,7 @@ void producer(char* filedata, int* pids, int total_consumers, int lines)
     
     read(fd, &media_pasajeros, sizeof(float));
     read(fd, &media_tiempo_de_viaje, sizeof(float));
+    read(fd, &lineas, sizeof(int));
     
     close(fd);
     remove(filename);	
@@ -190,7 +225,7 @@ void send_consumer(struct Data* d, int consumer)
         data[i] = d->passenger_count[i];
         data[d->total+i] = d->trip_time_in_secs[i];
     }
-    write(fd, data, sizeof(int)*2*(data->total)+1);
+    write(fd, data, sizeof(int)*2*(d->total)+1);
     close(fd);
 }
 
