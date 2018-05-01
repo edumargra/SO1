@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-int finalitzar = 0;
+int final = 0;
 int trans = 0;
 
 struct Data {
@@ -59,13 +59,11 @@ int main(int argc, char *argv[])
 }
 
 void transferir(int signo){
-    printf("He capturado la señal transferir.\n");
     trans++;
 }
 
 void finalizar(int signo){
-    printf("He capturado la señal finalizar.\n");
-    finalitzar = 1;
+    final = 1;
 }
 
 void consumer()
@@ -112,18 +110,17 @@ void consumer()
             partial_passenger_count /= max;
             partial_trip_time /= max;
             
-            mean_passenger_count = (mean_passenger_count + partial_passenger_count) / 2;
-            mean_trip_time = (mean_trip_time + partial_trip_time) / 2;
+            mean_passenger_count = (mean_passenger_count*totalLinies + partial_passenger_count*max) / (totalLinies + max);
+            mean_trip_time = (mean_trip_time*totalLinies + partial_trip_time*max) / (totalLinies + max);
             totalLinies += max;
             
             free(passenger_count);
             free(trip_time_in_secs);
         }
         if (trans == 0) {
-            printf("Soc al pause\n");
             pause();
         }
-    } while ((!finalitzar) && (trans != 0));
+    } while ((!final) && (trans != 0));
 	
 	close(fd);
 	remove(filename);
@@ -132,8 +129,6 @@ void consumer()
  	 * TODO: Codigo para entregar resultado parcial al productor a traves del mismo fichero
      *       que se ha utilizado para recibir datos.
  	 */	
-
-    printf("finalizar: %d trans: %d\n", finalitzar, trans);
     
     printf("lineas leidas: %d\n", totalLinies);
     fd = open(filename, O_CREAT | O_RDWR | O_SYNC | O_APPEND , S_IRUSR | S_IWUSR | S_IRGRP);
@@ -162,8 +157,6 @@ void producer(char* filedata, int* pids, int total_consumers, int lines)
         /*
          * TODO: Codigo para notificar que hay datos a los consumidores (SIGUSR1)
          */			
-        printf("He enviado señal transferir señal\n");
-
         kill(pids[0], SIGUSR1);
         
         d = get_data(file,lines);
@@ -171,12 +164,7 @@ void producer(char* filedata, int* pids, int total_consumers, int lines)
     /*
      * TODO: Codigo para notificar que finalicen los consumidores (SIGTERM)
      */
-    //Delay
-    /*int count = 0;
-    while(count < 50000) {
-        count++;
-    }*/
-    printf("He enviado señal signterm\n");
+    sleep(1); //Esperem que el consumidor processi la última senyal
     kill(pids[0], SIGTERM);
     
 
@@ -208,7 +196,7 @@ void producer(char* filedata, int* pids, int total_consumers, int lines)
 
 void send_consumer(struct Data* d, int consumer)
 {
-    int fd, data[2*d->total+1];
+    int fd, data[2*(d->total)+1];
     char filename[12];
     sprintf(filename, "%d", consumer);
     fd = open(filename, O_CREAT | O_RDWR | O_SYNC | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP);
@@ -219,13 +207,13 @@ void send_consumer(struct Data* d, int consumer)
      * Utilizar la variable 'data' para almacenar los datos en memoria antes de hacer
      * el write.
      */
-    int i = 0;
-    data[i] = d->total;
-    for(i = 1; i < d->total; i++){
-        data[i] = d->passenger_count[i];
-        data[d->total+i] = d->trip_time_in_secs[i];
+    int i;
+    data[0] = d->total;
+    for(i = 0; i < d->total; i++){
+        data[i+1] = d->passenger_count[i];
+        data[d->total+i+1] = d->trip_time_in_secs[i];
     }
-    write(fd, data, sizeof(int)*2*(d->total)+1);
+    write(fd, data, sizeof(int)*(2*(d->total)+1));
     close(fd);
 }
 
@@ -264,7 +252,7 @@ struct Data* get_data(FILE* file, int max)
 
     while (pos < max && fgets(line, sizeof(line), file))
     {
-        ret->passenger_count[pos] = get_column_int(line, 8); 
+        ret->passenger_count[pos] = get_column_int(line, 8);
         ret->trip_time_in_secs[pos] = get_column_int(line, 9); 
         pos++;
     }

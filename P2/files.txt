@@ -1,0 +1,7 @@
+./ex4.sh
+./ex1.sh
+./ex5.sh
+./ex2.sh
+./Proposta_exercici/sol1.sh
+./Proposta_exercici/sol2.sh
+./ex3.sh
