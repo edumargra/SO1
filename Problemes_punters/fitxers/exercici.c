@@ -21,10 +21,10 @@ int main () {
    // de var_double[1] i així successivament
 
    for(i = 0; i < 1000; i++) {
-       *ptr = var_int[i];
-       ptr++;
-       *ptr = var_double[i];
-       ptr++;
+      *ptr = (int *) (var_int + i);
+      ptr++;
+      *ptr = (double *) (var_double + i);
+      ptr += 2; //double ocupa 2 bytes
    }
 
    free(ptr);
