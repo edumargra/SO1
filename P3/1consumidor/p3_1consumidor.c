@@ -117,11 +117,14 @@ void consumer()
             free(passenger_count);
             free(trip_time_in_secs);
         }
-        if (trans == 0) {
+
+        if (trans == 0 && !final) {
             pause();
         }
-    } while ((!final) && (trans != 0));
-	
+
+    //Sortim quan: final i trans=0
+    } while (!(final && (trans == 0)));
+
 	close(fd);
 	remove(filename);
 
@@ -164,7 +167,7 @@ void producer(char* filedata, int* pids, int total_consumers, int lines)
     /*
      * TODO: Codigo para notificar que finalicen los consumidores (SIGTERM)
      */
-    sleep(1); //Esperem que el consumidor processi la última senyal
+    //sleep(1); //Esperem que el consumidor processi la última senyal
     kill(pids[0], SIGTERM);
     
 
