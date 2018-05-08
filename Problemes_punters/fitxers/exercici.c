@@ -20,22 +20,20 @@ int main () {
    // de var_double[0], seguit de var_int[1], seguit
    // de var_double[1] i així successivament
 
-
-
-
 	for(i = 0; i < 1000; i++) {
 		*(int*)ptr = var_int[i];  //canviem el valor emmagatzemat a ptr
-		ptr = (void*)(int*)ptr++; //avancem el pointer per un int
     printf("Value of var_int[%d] variable: %d\n", i, var_int[i] );
-    printf("Address stored in ptr variable: %d\n", *(int*)ptr );
+    printf("value stored in ptr variable: %d\n", *(int*)ptr );
+    ptr = ptr + sizeof(int); //avancem el pointer per la mida d'un int
 
     *(double*)ptr = var_double[i]; //canviem el valor emmagatzemat a ptr
-		ptr = (void*)(double*)ptr++; //avancem el pointer per un double
     printf("Value of var_double[%d] variable: %f\n", i, var_double[i] );
-    printf("Address stored in ptr variable: %f\n", *(double*)ptr );
-
-
+    printf("Value stored in ptr variable: %f\n", *(double*)ptr );
+		ptr = ptr + sizeof(double); //avancem el pointer per la mida d'un double
 	}
+
+  //tornem a l'adreça de memòria inicial per alliberar correctament el punter
+  ptr = ptr - (1000 * sizeof(int) + 1000 * sizeof(double));
 	free(ptr);
 
 	return 0;
