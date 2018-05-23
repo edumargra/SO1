@@ -12,12 +12,22 @@ p_meta_dades darrer_element = NULL;
 void *malloc(size_t mida);
 
 p_meta_dades cercar_bloc_lliure(size_t mida) {
-  p_meta_dades current = primer_element;
-
-  while (current && !(current->disponible && current->mida >= mida)) 
-    current = current->seguent;
-
-  return current;
+    p_meta_dades current = primer_element;
+ 
+    p_meta_dades best;
+    while(current){
+        if(current->disponible && current-> mida >= mida){
+            if(current->mida == mida){
+                best = current;
+                break;
+            } 
+            if(best == NULL || current->mida < best->mida){
+                best = current;
+            }
+        }
+        current = current->seguent;
+    }
+    return best;
 }
 
 p_meta_dades demanar_espai(size_t mida) {
