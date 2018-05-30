@@ -42,6 +42,7 @@ p_meta_dades demanar_espai(size_t mida) {
 }
 
 void *malloc(size_t mida) {
+    fprintf(stderr, "---MALLOC---\n");
   void *p;
   p_meta_dades meta_dades;
 
@@ -79,19 +80,21 @@ void *malloc(size_t mida) {
 }
 
 void *calloc(size_t nelem, size_t elsize) {
+    fprintf(stderr, "---CALLOC---\n");
     void *p = malloc(nelem*elsize); //Reservem memòria
     fprintf(stderr, "Calloc realitzat\n");
     return memset(p, 0, nelem*elsize); //Inicialitzem el bloc a 0
 }
 
 void *realloc(void *ptr, size_t mida){
+    fprintf(stderr, "---REALLOC---\n");
     if(ptr == NULL){ //si es null fem un malloc normal
         return malloc(mida);
     } 
     p_meta_dades meta_dades = (ptr - MIDA_META_DADES);
     if(meta_dades->mida < mida){ //si no es null i la mida es mes gran que la que tenia, recoloquem
         void *p = malloc(mida); //reservem la nova memoria
-        memcpy(p,ptr,meta_dades->mida); //copiem
+        memcpy(p, ptr, meta_dades->mida); //copiem
         free(ptr); //alliberem lantiga memoria
         fprintf(stderr, "Realloc realitzat\n");
         return p; //retornem el punter de la nova posicio de memoria 
@@ -99,6 +102,7 @@ void *realloc(void *ptr, size_t mida){
 }
 
 void free(void *p) {
+    fprintf(stderr, "---FREE---\n");
     if (p != NULL) { //Si el punter és NULL, ignorem la crida
         p_meta_dades meta_dades = (p - MIDA_META_DADES);
         if (meta_dades->magic != MAGIC) {//Comprovem que l'atribut magic contingui el valor correcte

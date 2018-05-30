@@ -15,12 +15,16 @@ p_meta_dades cercar_bloc_lliure(size_t mida) {
     p_meta_dades current = primer_element;
  
     p_meta_dades best = NULL;
-    while(current){
+    while(current != NULL){
+                fprintf(stderr, "Pastanaga1\n");
+                //fprintf(stderr, "Disponible: %d, mida: %d\n", current->disponible, current->mida);
         if(current->disponible && current->mida >= mida){
+            fprintf(stderr, "Pastanaga2\n");
             if(current->mida == mida){ //si trobem un de mida exacta, no fa falta seguir
                 best = current;
                 break;
             }
+            fprintf(stderr, "Pastanaga3\n");
             if(best == NULL || current->mida < best->mida){ //si no teniem un best o n'hi ha un de millor, l'assignem
                 best = current;
             }
@@ -51,6 +55,24 @@ p_meta_dades demanar_espai(size_t mida) {
   return meta_dades;
 }
 
+void divideix_bloc(p_meta_dades meta_dades, size_t mida) {
+    fprintf(stderr, "Disponible: %d, mida: %d\n", meta_dades->disponible, meta_dades->mida);
+    p_meta_dades meta_dades_nou;
+    
+    fprintf(stderr, "Broquil 0\n");
+    meta_dades_nou = ((void*)meta_dades) + mida + MIDA_META_DADES;
+    fprintf(stderr, "Broquil 1\n");
+    meta_dades_nou->mida = meta_dades->mida - mida;
+    fprintf(stderr, "Broquil 2\n");
+    meta_dades_nou->disponible = 1;
+    meta_dades_nou->seguent = meta_dades->seguent;
+    
+    fprintf(stderr, "Broquil 3\n");
+    meta_dades->mida = mida;
+    meta_dades->disponible = 0;
+    meta_dades->seguent = meta_dades_nou;
+}
+
 void *malloc(size_t mida) {
   void *p;
   p_meta_dades meta_dades;
@@ -70,11 +92,14 @@ void *malloc(size_t mida) {
     primer_element = meta_dades;
   }
   else {  // Hem cridat abans al malloc
+        fprintf(stderr, "Patata -1\n");
     meta_dades = cercar_bloc_lliure(mida);
+            fprintf(stderr, "Patata 0\n");
     if (meta_dades) { // meta_dades trobat
+        fprintf(stderr, "Patata1\n");
       meta_dades->disponible = 0;
       if(meta_dades->mida - mida > MIDA_META_DADES) { //si hi ha suficient espai sobrant per un nou bloc
-        p_meta_dades meta_dades_nou = (void*) meta_dades + mida + MIDA_META_DADES; //principi de les noves meta_dades
+        /*p_meta_dades meta_dades_nou = ((void*) meta_dades) + mida ; //principi de les noves meta_dades
         fprintf(stderr, "Recalculem 1\n");
         meta_dades_nou->seguent = meta_dades->seguent; //posem el meta_dades_nou a la cadena
         fprintf(stderr, "Recalculem 2\n");
@@ -82,10 +107,14 @@ void *malloc(size_t mida) {
         meta_dades_nou->mida = meta_dades->mida - mida; //setegem la mida 
         meta_dades_nou->magic = MAGIC; //setegem el magic
         meta_dades_nou->disponible = 1;  //el posem a disponible
-        meta_dades->mida = mida; //reajustem la mida del bloc antic
+        fprintf(stderr, "V2 Disponible: %d, mida: %d\n", meta_dades_nou->disponible, meta_dades_nou->mida);
+        meta_dades->mida = mida; //reajustem la mida del bloc antic*/
+        divideix_bloc(meta_dades, mida);
       }
     } else {     // no s'ha trobat meta_dades 
+        fprintf(stderr, "Patata2\n");
       meta_dades = demanar_espai(mida);
+        fprintf(stderr, "Patata3\n");
       if (!meta_dades)
         return (NULL);
     }
