@@ -14,14 +14,14 @@ void *malloc(size_t mida);
 p_meta_dades cercar_bloc_lliure(size_t mida) {
     p_meta_dades current = primer_element;
  
-    p_meta_dades best;
+    p_meta_dades best = NULL;
     while(current){
-        if(current->disponible && current-> mida >= mida){
-            if(current->mida == mida){
+        if(current->disponible && current->mida >= mida){
+            if(current->mida == mida){ //si trobem un de mida exacta, no fa falta seguir
                 best = current;
                 break;
-            } 
-            if(best == NULL || current->mida < best->mida){
+            }
+            if(best == NULL || current->mida < best->mida){ //si no teniem un best o n'hi ha un de millor, l'assignem
                 best = current;
             }
         }
@@ -106,6 +106,7 @@ void *realloc(void *ptr, size_t mida){
         fprintf(stderr, "Realloc realitzat\n");
         return p; //retornem el punter de la nova posicio de memoria 
     }
+    return ptr;
 }
 
 void free(void *p) {
@@ -116,6 +117,14 @@ void free(void *p) {
             return;
         }
         meta_dades->disponible = 1;//Posem l'atribut disponible de les meta_dades a 1.
+        p_meta_dades meta_dades_seguent = meta_dades->seguent;
+            //fprintf(stderr, "Disponible seguent: %d\n", meta_dades_seguent->disponible);
+            //fprintf(stderr, "Mida seguent: %d\n", meta_dades_seguent->mida);
+        while(meta_dades_seguent != NULL && meta_dades_seguent->disponible) {
+            meta_dades->mida += meta_dades_seguent->mida + MIDA_META_DADES;//sumen la mida del seguent mes la capçalera de meta_dades
+            meta_dades->seguent = meta_dades_seguent->seguent;
+            meta_dades_seguent = meta_dades->seguent;
+        }
         fprintf(stderr, "Free realitzat\n");
     }
 }
