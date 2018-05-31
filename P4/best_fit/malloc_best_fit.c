@@ -12,7 +12,7 @@ p_meta_dades darrer_element = NULL;
 void *malloc(size_t mida);
 
 p_meta_dades cercar_bloc_lliure(size_t mida) {
-    fprintf(stderr, "Cercant millor bloc!\n");
+    fprintf(stderr, "Cercant millor bloc:\n");
     p_meta_dades current = primer_element;
  
     p_meta_dades best = NULL;
@@ -32,6 +32,10 @@ p_meta_dades cercar_bloc_lliure(size_t mida) {
         
         current = current->seguent;
     }
+    
+    if (best)
+        fprintf(stderr, "Bloc trobat! Mida buscada: %zu, mida trobada: %zu\n",mida, best->mida);
+    
     return best;
 }
 
@@ -113,7 +117,7 @@ void *realloc(void *ptr, size_t mida){
     p_meta_dades meta_dades = (ptr - MIDA_META_DADES);
     if(meta_dades->mida < mida){ //si no es null i la mida es mes gran que la que tenia, recoloquem
         void *p = malloc(mida); //reservem la nova memoria
-        memcpy(p,ptr,meta_dades->mida); //copiem
+        p = memcpy(p,ptr,meta_dades->mida); //copiem
         free(ptr); //alliberem lantiga memoria
         fprintf(stderr, "Realloc realitzat\n");
         return p; //retornem el punter de la nova posicio de memoria 
@@ -134,11 +138,23 @@ void free(void *p) {
         
         //Agrupem blocs si els següents estan disponibles
         p_meta_dades meta_dades_seguent = meta_dades->seguent;
-        while(meta_dades_seguent != NULL && meta_dades_seguent->disponible) {
+        if(meta_dades_seguent != NULL && meta_dades_seguent->disponible) {
             meta_dades->mida += meta_dades_seguent->mida + MIDA_META_DADES; //sumen la mida del seguent mes la capçalera de meta_dades
-            meta_dades->seguent = meta_dades_seguent->seguent;
-            meta_dades_seguent = meta_dades->seguent;
+            meta_dades->seguent = meta_dades_seguent->seguent; //lliguem
+            if(darrer_element == meta_dades_seguent) //actualitzem darrer_element
+                darrer_element = meta_dades;
         }
+        p_meta_dades current = primer_element;
+        while(current && current->seguent != meta_dades){
+            current = current->seguent;
+        }
+        if(current && current->disponible){
+            current->mida += meta_dades->mida + MIDA_META_DADES; //sumen la mida del seguent mes la capçalera de meta_dades
+            current->seguent = meta_dades->seguent; //lliguem
+            if(darrer_element == meta_dades) //actualitzem darrer_element
+                darrer_element = current;
+        }
+        
         fprintf(stderr, "Free realitzat\n");
     }
 }

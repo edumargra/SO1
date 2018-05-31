@@ -12,12 +12,14 @@ p_meta_dades darrer_element = NULL;
 void *malloc(size_t mida);
 
 p_meta_dades cercar_bloc_lliure(size_t mida) {
+    fprintf(stderr, "Cercem millor bloc:\n");
     p_meta_dades current = primer_element;
  
     p_meta_dades best = NULL;
     while(current != NULL){
         
         if(current->disponible && current->mida >= mida){
+            fprintf(stderr, "Mida que volem %zu bytes. Mida que hem trobat %zu bytes\n", mida, current->mida);
             if(current->mida == mida){ //si trobem un de mida exacta, no fa falta seguir
                 best = current;
                 break;
@@ -31,6 +33,9 @@ p_meta_dades cercar_bloc_lliure(size_t mida) {
         current = current->seguent;
     }
     
+    if (best)
+        fprintf(stderr, "Bloc trobat! Mida buscada: %zu bytes, mida trobada: %zu bytes\n",mida, best->mida);
+
     return best;
 }
 
@@ -56,17 +61,25 @@ p_meta_dades demanar_espai(size_t mida) {
 }
 
 void divideix_bloc(p_meta_dades meta_dades, size_t mida) {
+    
+    fprintf(stderr, "Dividim bloc:\n");
+    fprintf(stderr, "Mida inicial: %zu. ", meta_dades->mida);
     //Creem el nou bloc i l'afegim a la cadena de blocs
     p_meta_dades meta_dades_nou;
     meta_dades_nou = ((void*)meta_dades) + mida + MIDA_META_DADES;
-    meta_dades_nou->mida = meta_dades->mida - mida;
+    meta_dades_nou->mida = meta_dades->mida - mida - MIDA_META_DADES;
     meta_dades_nou->disponible = 1;
     meta_dades_nou->seguent = meta_dades->seguent;
+    meta_dades_nou->magic = MAGIC;
     
     //Actualitzem la nova mida del bloc original i l'enllacem amb el nou
     meta_dades->mida = mida;
     meta_dades->disponible = 0;
     meta_dades->seguent = meta_dades_nou;
+    
+    if(darrer_element == meta_dades)
+        darrer_element = meta_dades_nou;
+    fprintf(stderr, "Mides finals: %zu i %zu\n", meta_dades->mida, meta_dades_nou->mida);
 }
 
 void *malloc(size_t mida) {
@@ -138,7 +151,6 @@ void *realloc(void *ptr, size_t mida){
 
 void free(void *p) {
     if (p != NULL) { //Si el punter és NULL, ignorem la crida
-        
         p_meta_dades meta_dades = (p - MIDA_META_DADES);
         
         if (meta_dades->magic != MAGIC) {//Comprovem que l'atribut magic contingui el valor correcte
@@ -150,10 +162,21 @@ void free(void *p) {
         
         //Agrupem blocs si els següents estan disponibles
         p_meta_dades meta_dades_seguent = meta_dades->seguent;
-        while(meta_dades_seguent != NULL && meta_dades_seguent->disponible) {
+        if(meta_dades_seguent != NULL && meta_dades_seguent->disponible) {
             meta_dades->mida += meta_dades_seguent->mida + MIDA_META_DADES; //sumen la mida del seguent mes la capçalera de meta_dades
-            meta_dades->seguent = meta_dades_seguent->seguent;
-            meta_dades_seguent = meta_dades->seguent;
+            meta_dades->seguent = meta_dades_seguent->seguent; //lliguem
+            if(darrer_element == meta_dades_seguent) //actualitzem darrer_element
+                darrer_element = meta_dades;
+        }
+        p_meta_dades current = primer_element;
+        while(current && current->seguent != meta_dades){
+            current = current->seguent;
+        }
+        if(current && current->disponible){
+            current->mida += meta_dades->mida + MIDA_META_DADES; //sumen la mida del seguent mes la capçalera de meta_dades
+            current->seguent = meta_dades->seguent; //lliguem
+            if(darrer_element == meta_dades) //actualitzem darrer_element
+                darrer_element = current;
         }
         
         fprintf(stderr, "Free realitzat\n");
