@@ -96,6 +96,7 @@ void *realloc(void *ptr, size_t mida){
         fprintf(stderr, "Realloc realitzat\n");
         return p; //retornem el punter de la nova posicio de memoria 
     }
+    return ptr;
 }
 
 void free(void *p) {
