@@ -12,12 +12,14 @@ p_meta_dades darrer_element = NULL;
 void *malloc(size_t mida);
 
 p_meta_dades cercar_bloc_lliure(size_t mida) {
+    fprintf(stderr, "Cercant millor bloc!\n");
     p_meta_dades current = primer_element;
  
     p_meta_dades best = NULL;
     while(current != NULL){
         
         if(current->disponible && current->mida >= mida){
+            fprintf(stderr, "Mida que volem %zu bytes. Mida que hem trobat %zu bytes\n", mida, current->mida);
             if(current->mida == mida){ //si trobem un de mida exacta, no fa falta seguir
                 best = current;
                 break;
